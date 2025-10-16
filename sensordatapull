@@ -1,0 +1,46 @@
+// Function Node içinde kullanılacak
+let temp = msg.payload.temperature;
+
+if (temp > 75) {
+    msg.payload = {
+        alert: "Critical Temperature Threshold Exceeded",
+        sensorId: msg.payload.sensorId,
+        temperature: temp,
+        timestamp: new Date().toISOString()
+    };
+    return [msg, null]; // 1. çıkış: alarm akışı
+} else {
+    return [null, msg]; // 2. çıkış: normal veri akışı
+}
+
+
+JSON Formatter
+
+// Farklı sensörlerden gelen veriyi tek tip formata dönüştür
+let data = msg.payload;
+
+msg.payload = {
+    factoryId: "PLANT-01",
+    lineId: data.line || "LINE-A",
+    sensorType: "Temperature",
+    sensorId: data.id || "UNKNOWN",
+    value: parseFloat(data.tempValue || data.temperature),
+    unit: "°C",
+    timestamp: new Date().toISOString()
+};
+
+return msg;
+
+
+// Inject Node tarafından tetiklenir (örneğin her 10 dakikada bir)
+msg.query = "SELECT AVG(temperature) as avgTemp FROM sensorData WHERE timestamp > NOW() - INTERVAL 10 MINUTE";
+return msg;
+
+let t = msg.payload.temperature;
+msg.payload = {
+    label: `Sıcaklık (°C)`,
+    value: t.toFixed(1),
+    color: t > 75 ? "red" : "green"
+};
+return msg;
+
